@@ -1,7 +1,6 @@
 version: 2.1
 
-# --- NUEVO BLOQUE 'ORBS' ---
-# Aquí le decimos a CircleCI que queremos usar el paquete del CLI.
+# 1. Definimos el Orb del CLI
 orbs:
   circleci-cli: circleci/circleci-cli@0.1.9
 
@@ -73,16 +72,20 @@ jobs:
       - attach_workspace:
           at: .
       
-      # --- ¡PASO DE INSTALACIÓN CORREGIDO! ---
-      # Ya no usamos 'curl'. Ahora usamos el Orb.
+      # --- ¡AQUÍ ESTÁ LA CORRECCIÓN CLAVE! ---
+      # 1. Instala el CLI usando el Orb
       - circleci-cli/install
       
-      # (Se eliminó el paso 'setup' porque ya no es necesario)
+      # 2. Configura el CLI (no interactivo) usando el Orb.
+      #    Automáticamente buscará la variable $CIRCLECI_CLI_TOKEN
+      - circleci-cli/setup
+      
+      # --- FIN DE LA CORRECCIÓN ---
 
       - run:
           name: Plan deploy in CircleCI
           command: |
-            # El CLI usará la variable $CIRCLECI_TOKEN automáticamente
+            # Ahora este comando estará autenticado
             circleci release create --version="$CIRCLE_BUILD_NUM"
       - run:
           name: Deploy application (Simulated)
