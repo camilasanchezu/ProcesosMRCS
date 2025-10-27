@@ -26,7 +26,7 @@ pipeline {
 
         stage('Setup Environment') {
             steps {
-                echo '🔧 Preparando entorno virtual...'
+                echo 'Preparando entorno virtual...'
                 bat 'if not exist TestResults mkdir TestResults'
                 bat '''
 python -m venv .venv
@@ -39,7 +39,7 @@ pip install -r requirements.txt
 
         stage('Build Application') {
             steps {
-                echo '🏗️ Construyendo artefactos (compilación bytecode)...'
+                echo 'Construyendo artefactos (compilación bytecode)...'
                 bat '''
 call .venv\\Scripts\\activate
 python -m compileall app
@@ -50,7 +50,7 @@ python -m compileall app
 
         stage('Unit Tests') {
             steps {
-                echo '🧪 Ejecutando pruebas unitarias...'
+                echo 'Ejecutando pruebas unitarias...'
                 bat '''
 call .venv\\Scripts\\activate
 pytest --junitxml=TestResults\\pytest-results.xml
@@ -61,7 +61,7 @@ pytest --junitxml=TestResults\\pytest-results.xml
 
         stage('Code Quality - Flake8') {
             steps {
-                echo '🔍 Analizando calidad de código con flake8...'
+                echo 'Analizando calidad de código con flake8...'
                 bat '''
 call .venv\\Scripts\\activate
 flake8 app tests --statistics --output-file=TestResults\\flake8-report.txt
@@ -75,7 +75,7 @@ flake8 app tests --statistics --output-file=TestResults\\flake8-report.txt
                 branch 'main'
             }
             steps {
-                echo '🚀 Despliegue simulado al entorno de producción...'
+                echo 'Despliegue simulado al entorno de producción...'
                 unstash 'app-source'
                 bat 'if not exist %DEPLOY_PATH% mkdir %DEPLOY_PATH%'
                 bat 'xcopy /E /I /Y app %DEPLOY_PATH%\\app'
@@ -85,7 +85,7 @@ flake8 app tests --statistics --output-file=TestResults\\flake8-report.txt
 
     post {
         always {
-            echo "🧹 Limpieza final: estado ${currentBuild.currentResult}."
+            echo "Limpieza final: estado ${currentBuild.currentResult}."
             archiveArtifacts artifacts: 'TestResults/**', allowEmptyArchive: true
             githubNotify context: 'ci-pipeline-python/jenkins',
                         description: "Pipeline finalizado (${currentBuild.currentResult})",
@@ -93,12 +93,12 @@ flake8 app tests --statistics --output-file=TestResults\\flake8-report.txt
         }
 
         success {
-            echo '✅ Pipeline completado correctamente.'
+            echo 'Pipeline completado correctamente.'
             githubNotify context: 'ci-pipeline-python/jenkins', description: 'Listo para integrar.', status: 'SUCCESS'
         }
 
         failure {
-            echo '❌ El pipeline falló.'
+            echo 'El pipeline falló.'
             githubNotify context: 'ci-pipeline-python/jenkins', description: 'Revisar logs del job.', status: 'FAILURE'
         }
     }
