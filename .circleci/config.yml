@@ -1,6 +1,8 @@
 version: 2.1
 
-# ¡HEMOS ELIMINADO EL BLOQUE 'orbs:'!
+# 1. Definimos el Orb (¡Correcto!)
+orbs:
+  circleci-cli: circleci/circleci-cli@0.1.9
 
 executors:
   python-exec:
@@ -70,16 +72,19 @@ jobs:
       - attach_workspace:
           at: .
       
-      # --- ¡SOLUCIÓN! Volvemos a la instalación manual ---
-      - run:
-          name: Install CircleCI CLI
-          command: |
-            # Esta es la URL que SÍ funciona e instala el CLI NUEVO
-            curl -fLSs https://raw.githubusercontent.com/CircleCI-Public/circleci-cli/master/install.sh | sudo bash
+      # --- ¡LA SOLUCIÓN DEFINITIVA ESTÁ AQUÍ! ---
       
-      # (NO hay paso de 'setup', el CLI buscará $CIRCLECI_CLI_TOKEN)
+      # 1. Instala el CLI nuevo (sobrescribiendo el antiguo)
+      - circleci-cli/install
+      
+      # 2. Configura la autenticación explícitamente.
+      #    Le dice al Orb que use la variable llamada 'CIRCLECI_CLI_TOKEN'.
+      - circleci-cli/setup:
+          token: CIRCLECI_CLI_TOKEN
+      
+      # --- FIN DE LA SOLUCIÓN ---
 
-      # --- Usamos los comandos NUEVOS ---
+      # 3. Usamos los comandos NUEVOS (que ahora SÍ existen)
       - run:
           name: Plan deploy in CircleCI
           command: |
