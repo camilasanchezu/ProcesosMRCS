@@ -86,14 +86,12 @@ flake8 app tests --statistics --output-file=TestResults\\flake8-report.txt
             // Notificar solo por email si se definieron destinatarios en EMAIL_RECIPIENTS
             script {
                 try {
-                    if (env.EMAIL_RECIPIENTS) {
-                        echo "Enviando notificación por email a: ${env.EMAIL_RECIPIENTS}"
-                        emailext subject: "[Jenkins] ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${currentBuild.currentResult}",
-                                 body: "Job: ${env.JOB_NAME}\nBuild: ${env.BUILD_NUMBER}\nResultado: ${currentBuild.currentResult}\nURL: ${env.BUILD_URL}",
-                                 to: env.EMAIL_RECIPIENTS
-                    } else {
-                        echo 'EMAIL_RECIPIENTS no configurado — omitiendo notificación por email.'
-                    }
+                    // Si EMAIL_RECIPIENTS no está definido, usar el correo por defecto configurado en Jenkins
+                    def recipients = env.EMAIL_RECIPIENTS ?: 'csanchez.lospinos@gmail.com'
+                    echo "Enviando notificación por email a: ${recipients}"
+                    emailext subject: "[Jenkins] ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${currentBuild.currentResult}",
+                             body: "Job: ${env.JOB_NAME}\nBuild: ${env.BUILD_NUMBER}\nResultado: ${currentBuild.currentResult}\nURL: ${env.BUILD_URL}\n\nCambios:\n${CHANGES}",
+                             to: recipients
                 } catch (ee) {
                     echo "Fallo al enviar email: ${ee}"
                 }
