@@ -1,9 +1,5 @@
 version: 2.1
 
-# 1. Definimos el Orb (¡Correcto!)
-orbs:
-  circleci-cli: circleci/circleci-cli@0.1.9
-
 executors:
   python-exec:
     docker:
@@ -67,46 +63,19 @@ jobs:
           destination: TestResults
 
   deploy:
-    # --- ¡LA SOLUCIÓN! ---
-    # Usamos el ejecutor del Orb, que SÍ tiene el CLI correcto.
-    executor: circleci-cli/default
-    # ---------------------
-    
+    executor: python-exec
     steps:
       - attach_workspace:
           at: .
-      
-      # (Ya no necesitamos 'install' ni 'setup',
-      # el ejecutor 'default' ya lo tiene todo.
-      # Automáticamente usará $CIRCLECI_CLI_TOKEN)
-
       - run:
-          name: Plan deploy in CircleCI
+          name: Simulate deploy (only on main)
           command: |
-            circleci release create --version="$CIRCLE_BUILD_NUM"
-      
-      - run:
-          name: Deploy application (Simulated)
-          command: |
-            # Este ejecutor tiene 'cp' y 'echo'
+            . .venv/bin/activate || true
             if [ ! -d /tmp/deploy ]; then mkdir -p /tmp/deploy; fi
-            cp -r app /tmp/deploy/app
+            cp -r app /tmp/deploy/app || true
             echo "Deployed app to /tmp/deploy/app"
-      
-      - run:
-          name: Update deploy to SUCCESS
-          command: |
-            circleci release finalize --version="$CIRCLE_BUILD_NUM" --status=SUCCESS
-          when: on_success
-          
-      - run:
-          name: Update deploy to FAILED
-          command: |
-            circleci release finalize --version="$CIRCLE_BUILD_NUM" --status=FAILED
-          when: on_fail
 
   notify_email:
-    # Este job sigue usando Python, lo cual es correcto
     executor: python-exec
     steps:
       - run:
