@@ -1,5 +1,10 @@
 version: 2.1
 
+# --- NUEVO BLOQUE 'ORBS' ---
+# Aquí le decimos a CircleCI que queremos usar el paquete del CLI.
+orbs:
+  circleci-cli: circleci/circleci-cli@0.1.9
+
 executors:
   python-exec:
     docker:
@@ -67,12 +72,13 @@ jobs:
     steps:
       - attach_workspace:
           at: .
-      - run:
-          name: Install CircleCI CLI
-          command: |
-            # Esta es la nueva URL oficial para el script de instalación
-            curl -fLSs https://raw.githubusercontent.com/CircleCI-Public/circleci-cli/master/install.sh | sudo bash
-       
+      
+      # --- ¡PASO DE INSTALACIÓN CORREGIDO! ---
+      # Ya no usamos 'curl'. Ahora usamos el Orb.
+      - circleci-cli/install
+      
+      # (Se eliminó el paso 'setup' porque ya no es necesario)
+
       - run:
           name: Plan deploy in CircleCI
           command: |
