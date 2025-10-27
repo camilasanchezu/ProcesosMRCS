@@ -62,7 +62,8 @@ jobs:
           path: TestResults
           destination: TestResults
 
-deploy:
+
+  deploy:
     executor: python-exec
     steps:
       - attach_workspace:
@@ -97,6 +98,7 @@ deploy:
           command: |
             circleci run release update --target-version="$CIRCLE_BUILD_NUM" --status=FAILED
           when: on_fail
+
 
   notify_email:
     executor: python-exec
