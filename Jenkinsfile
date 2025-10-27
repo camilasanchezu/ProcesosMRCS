@@ -80,22 +80,17 @@ flake8 app tests --statistics --output-file=TestResults\\flake8-report.txt
     }
 
     post {
-        always {
+            always {
             echo "Limpieza final: estado ${currentBuild.currentResult}."
             archiveArtifacts artifacts: 'TestResults/**', allowEmptyArchive: true
-            githubNotify context: 'ci-pipeline-python/jenkins',
-                        description: "Pipeline finalizado (${currentBuild.currentResult})",
-                        status: currentBuild.currentResult == 'SUCCESS' ? 'SUCCESS' : currentBuild.currentResult == 'FAILURE' ? 'FAILURE' : 'ERROR'
         }
 
         success {
             echo 'Pipeline completado correctamente.'
-            githubNotify context: 'ci-pipeline-python/jenkins', description: 'Listo para integrar.', status: 'SUCCESS'
         }
 
         failure {
             echo 'El pipeline falló.'
-            githubNotify context: 'ci-pipeline-python/jenkins', description: 'Revisar logs del job.', status: 'FAILURE'
         }
     }
 }
