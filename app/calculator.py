@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+"""Ejercicio de importacion futura"""
 
 def add(a: float, b: float) -> float:
     """Return the sum of two numbers."""
