@@ -1,6 +1,6 @@
 version: 2.1
 
-# 1. Definimos el Orb del CLI
+# 1. Definimos el Orb del CLI (Correcto)
 orbs:
   circleci-cli: circleci/circleci-cli@0.1.9
 
@@ -66,25 +66,25 @@ jobs:
           path: TestResults
           destination: TestResults
 
-  # --- JOB 'DEPLOY' ADAPTADO A TUS COMANDOS ---
   deploy:
     executor: python-exec
     steps:
       - attach_workspace:
           at: .
       
-      # 1. Instala el CLI (necesario)
+      # 1. Instala el CLI (¡Correcto!)
       - circleci-cli/install
       
-      # 2. Configura la autenticación (necesario, usa $CIRCLECI_CLI_TOKEN)
-      - circleci-cli/setup
+      # (Se elimina el paso 'setup' para que el CLI
+      # use $CIRCLECI_CLI_TOKEN automáticamente)
       
-      # 3. Tu comando "Plan a deploy"
+      # 2. El comando NUEVO y CORRECTO
       - run:
-          name: Plan a deploy
-          command: circleci run release plan --target-version="$CIRCLE_BUILD_NUM"
+          name: Plan deploy in CircleCI
+          command: |
+            circleci release create --version="$CIRCLE_BUILD_NUM"
       
-      # 4. Tu lógica de despliegue (simulación)
+      # 3. Tu simulación de deploy
       - run:
           name: Deploy application (Simulated)
           command: |
@@ -92,17 +92,19 @@ jobs:
             if [ ! -d /tmp/deploy ]; then mkdir -p /tmp/deploy; fi
             cp -r app /tmp/deploy/app
             echo "Deployed app to /tmp/deploy/app"
-      
-      # 5. Tu comando "Update to SUCCESS"
+            
+      # 4. Reportar ÉXITO (con el comando NUEVO)
       - run:
-          name: Update a deploy to SUCCESS
-          command: circleci run release update --status=SUCCESS
+          name: Update deploy to SUCCESS
+          command: |
+            circleci release finalize --version="$CIRCLE_BUILD_NUM" --status=SUCCESS
           when: on_success
           
-      # 6. Tu comando "Update to FAILED"
+      # 5. Reportar FALLO (con el comando NUEVO)
       - run:
-          name: Update planned deploy to FAILED
-          command: circleci run release update --status=FAILED
+          name: Update deploy to FAILED
+          command: |
+            circleci release finalize --version="$CIRCLE_BUILD_NUM" --status=FAILED
           when: on_fail
 
   notify_email:
