@@ -83,13 +83,32 @@ flake8 app tests --statistics --output-file=TestResults\\flake8-report.txt
         always {
             echo "Limpieza final: estado ${currentBuild.currentResult}."
             archiveArtifacts artifacts: 'TestResults/**', allowEmptyArchive: true
-            // Enviar notificación a Slack si se configuró SLACK_CHANNEL en el job o globalmente
+            // Intentar notificar por Slack si SLACK_CHANNEL está configurado; si falla, usar webhook (sin plugin)
             script {
-                if (env.SLACK_CHANNEL) {
-                    def color = currentBuild.currentResult == 'SUCCESS' ? 'good' : (currentBuild.currentResult == 'FAILURE' ? 'danger' : 'warning')
-                    slackSend channel: env.SLACK_CHANNEL, color: color, message: "${env.JOB_NAME} #${env.BUILD_NUMBER} finalizó con estado: ${currentBuild.currentResult} - ${env.BUILD_URL}"
-                } else {
-                    echo 'SLACK_CHANNEL no configurado — omitiendo notificación Slack.'
+                def msg = "${env.JOB_NAME} #${env.BUILD_NUMBER} finalizó con estado: ${currentBuild.currentResult} - ${env.BUILD_URL}"
+                def color = currentBuild.currentResult == 'SUCCESS' ? 'good' : (currentBuild.currentResult == 'FAILURE' ? 'danger' : 'warning')
+                try {
+                    if (env.SLACK_CHANNEL) {
+                        // Intentamos slackSend (requiere Slack plugin). Si el plugin no existe, atrapamos la excepción.
+                        slackSend channel: env.SLACK_CHANNEL, color: color, message: msg
+                        echo 'Enviado mensaje vía slackSend.'
+                    } else {
+                        throw new Exception('SLACK_CHANNEL no configurado')
+                    }
+                } catch (e) {
+                    echo "Slack not available or failed: ${e}. Attempting webhook fallback."
+                    try {
+                        // Fallback: usar webhook guardado en credencial NOTIFY_WEBHOOK (Secret text)
+                        withCredentials([string(credentialsId: 'NOTIFY_WEBHOOK', variable: 'WEBHOOK_URL')]) {
+                            powershell(returnStdout: true, script: """
+$payload = ConvertTo-Json @{ text = '${msg}' }
+Invoke-RestMethod -Uri '$env:WEBHOOK_URL' -Method Post -Body $payload -ContentType 'application/json'
+""")
+                            echo 'Notificación enviada via webhook.'
+                        }
+                    } catch (e2) {
+                        echo "Webhook notification failed or NOTIFY_WEBHOOK not configured: ${e2}"
+                    }
                 }
             }
         }
