@@ -81,7 +81,7 @@ jobs:
       - run:
           name: Send notification email
           command: |
-            python - <<'PY'
+            python - \<<'PY'
             import os, smtplib
             from email.message import EmailMessage
 
