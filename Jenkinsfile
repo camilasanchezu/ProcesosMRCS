@@ -80,9 +80,18 @@ flake8 app tests --statistics --output-file=TestResults\\flake8-report.txt
     }
 
     post {
-            always {
+        always {
             echo "Limpieza final: estado ${currentBuild.currentResult}."
             archiveArtifacts artifacts: 'TestResults/**', allowEmptyArchive: true
+            // Enviar notificación a Slack si se configuró SLACK_CHANNEL en el job o globalmente
+            script {
+                if (env.SLACK_CHANNEL) {
+                    def color = currentBuild.currentResult == 'SUCCESS' ? 'good' : (currentBuild.currentResult == 'FAILURE' ? 'danger' : 'warning')
+                    slackSend channel: env.SLACK_CHANNEL, color: color, message: "${env.JOB_NAME} #${env.BUILD_NUMBER} finalizó con estado: ${currentBuild.currentResult} - ${env.BUILD_URL}"
+                } else {
+                    echo 'SLACK_CHANNEL no configurado — omitiendo notificación Slack.'
+                }
+            }
         }
 
         success {
