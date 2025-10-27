@@ -62,30 +62,25 @@ jobs:
           path: TestResults
           destination: TestResults
 
-
-deploy:
+  deploy:
     executor: python-exec
     steps:
       - attach_workspace:
           at: .
-      
       - run:
           name: Install CircleCI CLI
           command: |
             # Esta es la nueva URL oficial para el script de instalación
             curl -fLSs https://raw.githubusercontent.com/CircleCI-Public/circleci-cli/master/install.sh | sudo bash
-      
       - run:
           name: Setup CircleCI CLI
           command: |
             circleci setup --token $CIRCLECI_API_TOKEN --host https://circleci.com
-
       - run:
           name: Plan deploy in CircleCI
           command: |
             # 'release plan --target-version' se reemplaza por 'release create --version'
             circleci release create --version="$CIRCLE_BUILD_NUM"
-
       - run:
           name: Deploy application (Simulated)
           command: |
@@ -93,21 +88,18 @@ deploy:
             if [ ! -d /tmp/deploy ]; then mkdir -p /tmp/deploy; fi
             cp -r app /tmp/deploy/app
             echo "Deployed app to /tmp/deploy/app"
-
       - run:
           name: Update deploy to SUCCESS
           command: |
             # 'release update' se reemplaza por 'release finalize'
             circleci release finalize --version="$CIRCLE_BUILD_NUM" --status=SUCCESS
           when: on_success
-
       - run:
           name: Update deploy to FAILED
           command: |
             # 'release update' se reemplaza por 'release finalize'
             circleci release finalize --version="$CIRCLE_BUILD_NUM" --status=FAILED
           when: on_fail
-
 
   notify_email:
     executor: python-exec
