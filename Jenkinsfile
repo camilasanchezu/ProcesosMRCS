@@ -110,6 +110,19 @@ Invoke-RestMethod -Uri '$env:WEBHOOK_URL' -Method Post -Body $payload -ContentTy
                         echo "Webhook notification failed or NOTIFY_WEBHOOK not configured: ${e2}"
                     }
                 }
+                // Enviar email si se definieron destinatarios en EMAIL_RECIPIENTS
+                try {
+                    if (env.EMAIL_RECIPIENTS) {
+                        echo "Enviando notificación por email a: ${env.EMAIL_RECIPIENTS}"
+                        emailext subject: "[Jenkins] ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${currentBuild.currentResult}",
+                                 body: "Job: ${env.JOB_NAME}\nBuild: ${env.BUILD_NUMBER}\nResultado: ${currentBuild.currentResult}\nURL: ${env.BUILD_URL}",
+                                 to: env.EMAIL_RECIPIENTS
+                    } else {
+                        echo 'EMAIL_RECIPIENTS no configurado — omitiendo notificación por email.'
+                    }
+                } catch (ee) {
+                    echo "Fallo al enviar email: ${ee}"
+                }
             }
         }
 
