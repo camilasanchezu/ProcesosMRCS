@@ -67,24 +67,19 @@ jobs:
           destination: TestResults
 
   deploy:
-    executor: python-exec
+    # --- ¡LA SOLUCIÓN! ---
+    # Usamos el ejecutor del Orb, que SÍ tiene el CLI correcto.
+    executor: circleci-cli/default
+    # ---------------------
+    
     steps:
       - attach_workspace:
           at: .
       
-      # --- ¡LA SOLUCIÓN DEFINITIVA ESTÁ AQUÍ! ---
-      
-      # 1. Instala el CLI nuevo (sobrescribiendo el antiguo)
-      - circleci-cli/install
-      
-      # 2. Configura la autenticación explícitamente.
-      #    Le dice al Orb que use la variable llamada 'CIRCLECI_CLI_TOKEN'.
-      - circleci-cli/setup:
-          token: CIRCLECI_CLI_TOKEN
-      
-      # --- FIN DE LA SOLUCIÓN ---
+      # (Ya no necesitamos 'install' ni 'setup',
+      # el ejecutor 'default' ya lo tiene todo.
+      # Automáticamente usará $CIRCLECI_CLI_TOKEN)
 
-      # 3. Usamos los comandos NUEVOS (que ahora SÍ existen)
       - run:
           name: Plan deploy in CircleCI
           command: |
@@ -93,7 +88,7 @@ jobs:
       - run:
           name: Deploy application (Simulated)
           command: |
-            . .venv/bin/activate
+            # Este ejecutor tiene 'cp' y 'echo'
             if [ ! -d /tmp/deploy ]; then mkdir -p /tmp/deploy; fi
             cp -r app /tmp/deploy/app
             echo "Deployed app to /tmp/deploy/app"
@@ -111,6 +106,7 @@ jobs:
           when: on_fail
 
   notify_email:
+    # Este job sigue usando Python, lo cual es correcto
     executor: python-exec
     steps:
       - run:
