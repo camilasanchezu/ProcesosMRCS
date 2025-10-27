@@ -1,5 +1,7 @@
 version: 2.1
 
+# ¡HEMOS ELIMINADO EL BLOQUE 'orbs:'!
+
 executors:
   python-exec:
     docker:
@@ -67,13 +69,41 @@ jobs:
     steps:
       - attach_workspace:
           at: .
+      
+      # --- ¡SOLUCIÓN! Volvemos a la instalación manual ---
       - run:
-          name: Simulate deploy (only on main)
+          name: Install CircleCI CLI
           command: |
-            . .venv/bin/activate || true
+            # Esta es la URL que SÍ funciona e instala el CLI NUEVO
+            curl -fLSs https://raw.githubusercontent.com/CircleCI-Public/circleci-cli/master/install.sh | sudo bash
+      
+      # (NO hay paso de 'setup', el CLI buscará $CIRCLECI_CLI_TOKEN)
+
+      # --- Usamos los comandos NUEVOS ---
+      - run:
+          name: Plan deploy in CircleCI
+          command: |
+            circleci release create --version="$CIRCLE_BUILD_NUM"
+      
+      - run:
+          name: Deploy application (Simulated)
+          command: |
+            . .venv/bin/activate
             if [ ! -d /tmp/deploy ]; then mkdir -p /tmp/deploy; fi
-            cp -r app /tmp/deploy/app || true
+            cp -r app /tmp/deploy/app
             echo "Deployed app to /tmp/deploy/app"
+      
+      - run:
+          name: Update deploy to SUCCESS
+          command: |
+            circleci release finalize --version="$CIRCLE_BUILD_NUM" --status=SUCCESS
+          when: on_success
+          
+      - run:
+          name: Update deploy to FAILED
+          command: |
+            circleci release finalize --version="$CIRCLE_BUILD_NUM" --status=FAILED
+          when: on_fail
 
   notify_email:
     executor: python-exec
