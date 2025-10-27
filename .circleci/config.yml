@@ -1,5 +1,9 @@
 version: 2.1
 
+# 1. Definimos el Orb del CLI
+orbs:
+  circleci-cli: circleci/circleci-cli@0.1.9
+
 executors:
   python-exec:
     docker:
@@ -62,18 +66,44 @@ jobs:
           path: TestResults
           destination: TestResults
 
+  # --- JOB 'DEPLOY' ADAPTADO A TUS COMANDOS ---
   deploy:
     executor: python-exec
     steps:
       - attach_workspace:
           at: .
+      
+      # 1. Instala el CLI (necesario)
+      - circleci-cli/install
+      
+      # 2. Configura la autenticación (necesario, usa $CIRCLECI_CLI_TOKEN)
+      - circleci-cli/setup
+      
+      # 3. Tu comando "Plan a deploy"
       - run:
-          name: Simulate deploy (only on main)
+          name: Plan a deploy
+          command: circleci run release plan --target-version="$CIRCLE_BUILD_NUM"
+      
+      # 4. Tu lógica de despliegue (simulación)
+      - run:
+          name: Deploy application (Simulated)
           command: |
-            . .venv/bin/activate || true
+            . .venv/bin/activate
             if [ ! -d /tmp/deploy ]; then mkdir -p /tmp/deploy; fi
-            cp -r app /tmp/deploy/app || true
+            cp -r app /tmp/deploy/app
             echo "Deployed app to /tmp/deploy/app"
+      
+      # 5. Tu comando "Update to SUCCESS"
+      - run:
+          name: Update a deploy to SUCCESS
+          command: circleci run release update --status=SUCCESS
+          when: on_success
+          
+      # 6. Tu comando "Update to FAILED"
+      - run:
+          name: Update planned deploy to FAILED
+          command: circleci run release update --status=FAILED
+          when: on_fail
 
   notify_email:
     executor: python-exec
