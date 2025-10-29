@@ -72,11 +72,11 @@ jobs:
           command: |
             . .venv/bin/activate || true
             if [ ! -d /tmp/deploy ]; then mkdir -p /tmp/deploy; fi
-            # --- CORRECCIÓN ---
             # Quité '|| true' para que el job falle si la copia falla
             cp -r app /tmp/deploy/app
             echo "Deployed app to /tmp/deploy/app"
       
+      # Este es tu nuevo paso para guardar los artefactos
       - store_artifacts:
           path: /tmp/deploy/app
           destination: mi-app-desplegada
@@ -167,9 +167,6 @@ workflows:
       - notify_email:
           requires:
             - deploy
-          filters:
-            branches:
-              only: main
           filters:
             branches:
               only: main
